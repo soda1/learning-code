@@ -1,0 +1,15 @@
+spring:
+  rabbitmq:
+    host: localhost
+    username: guest
+    password: guest
+    port: 5672
+    publisher-confirms: true
+    publisher-returns: true
+    listener:
+      direct:
+        acknowledge-mode: manual #手动确认
+      simple:
+        acknowledge-mode: manual
+server:
+  port: 8081
