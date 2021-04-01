@@ -34,6 +34,9 @@ public class MyRedis {
         Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(User.class);
         redisTemplate.setKeySerializer(new Jackson2JsonRedisSerializer(String.class));
         redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);
+        //设置hash类型键值对序列化器
+        redisTemplate.setHashKeySerializer(new Jackson2JsonRedisSerializer<>(String.class));
+        redisTemplate.setHashValueSerializer(new Jackson2JsonRedisSerializer<>(User.class));
         redisTemplate.setConnectionFactory(lettuceConnectionFactory);
         System.out.println(redisTemplate);
         return redisTemplate;
