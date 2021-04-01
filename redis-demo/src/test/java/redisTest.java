@@ -189,7 +189,6 @@ public class redisTest {
                 Player  next = (Player) running1.next();
                 System.out.println(next);
             }
-
             TimeUnit.SECONDS.sleep(3);
             System.out.println("----------------------------");
         }
