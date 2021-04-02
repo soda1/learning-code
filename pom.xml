@@ -18,6 +18,7 @@
         <module>spring-transaction</module>
         <module>springboot-review</module>
         <module>redis-demo</module>
+        <module>redis-distribute-lock</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>

@@ -1,13 +1,11 @@
 import com.soda.redis.MyRedisApplication;
-import com.soda.redis.pojo.Animal;
+import com.soda.redis.lock.DistributeLock;
 import com.soda.redis.pojo.Player;
 import com.soda.redis.pojo.User;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.dao.DataAccessException;
@@ -15,17 +13,11 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import javax.annotation.Resources;
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 
@@ -127,7 +119,7 @@ public class redisTest {
 
 
     /**
-     * 用户点赞视频demo
+     * 使用bitmap实现用户点赞视频demo
      */
     @Test
     public void test7() {
@@ -156,7 +148,7 @@ public class redisTest {
 
 
     /**
-     * 实时比赛排行榜
+     * 使用Zset实现实时比赛排行榜
      */
     @Test
     public void test8() throws InterruptedException {
@@ -198,7 +190,10 @@ public class redisTest {
     }
 
 
-
+    /**
+     * player线程
+     * @param player1
+     */
     private void playerThread(Player player1) {
         new Thread(()->{
 
@@ -221,6 +216,79 @@ public class redisTest {
         }).start();
     }
 
+
+    /**
+     * 多线程分布式锁测试
+     */
+    @Test
+    public void test9() {
+
+        Player player = new Player("李白", 0);
+
+        for (int i = 0; i < 10; i++) {
+            distributeThread(player);
+        }
+
+        while (true) {
+
+        }
+
+
+    }
+
+    /**
+     * 分布式锁测试
+     */
+    @Test
+    public void test10() throws InterruptedException {
+
+        DistributeLock distributeLock = new DistributeLock(redisTemplate);
+        String s = UUID.randomUUID().toString();
+        try {
+
+            while (!distributeLock.lockWithLua(s)) {
+
+            }
+            System.out.println("get the lockWithLua");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }finally {
+            TimeUnit.SECONDS.sleep(30);
+            distributeLock.unlockWithLua(s);
+        }
+    }
+
+    /**
+     * 测试分布式锁线程
+     * @param player
+     */
+    private void distributeThread(Player player) {
+        new Thread(()->{
+
+            DistributeLock distributeLock = new DistributeLock(redisTemplate);
+            String uuid = UUID.randomUUID().toString();
+            for (int i = 0; i < 100; i++) {
+                try {
+
+                    //可以测试加不加锁区别
+                    while (!distributeLock.lockWithLua(uuid));
+
+//                    System.out.println(Thread.currentThread().getName() + "get the lockWithLua");
+
+                    player.setDistance(player.getDistance() + 1);
+
+                    System.out.println(player.getDistance());
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }finally {
+                    distributeLock.unlockWithLua(uuid);
+                }
+
+            }
+
+        }).start();
+    }
 
     /**
      * 注解解析
