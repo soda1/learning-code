@@ -311,6 +311,17 @@ public class redisTest {
     }
 
 
+    /**
+     * 缓存一致性
+     */
+    @Test
+    public void test11() {
+        String key = "cacheConsistency";
+        redisTemplate.opsForValue().set(key, "test1", 30, TimeUnit.MINUTES);
+        
+    }
+
+
 }
 
 
