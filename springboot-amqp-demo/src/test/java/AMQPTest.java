@@ -26,4 +26,12 @@ public class AMQPTest {
     public void test02() {
         String str = "w" + "a";
     }
+
+
+    @Test
+    public void test03() {
+        //测试RabbitMQ
+        rabbitTemplate.convertAndSend("soda.delayExchange", "soda.delayKey", "hello", new CorrelationData(UUID.randomUUID().toString()));
+    }
+
 }

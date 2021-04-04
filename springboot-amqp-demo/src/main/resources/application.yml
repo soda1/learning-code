@@ -6,10 +6,21 @@ spring:
     port: 5672
     publisher-confirms: true
     publisher-returns: true
+
     listener:
       direct:
-        acknowledge-mode: manual #手动确认
+        acknowledge-mode: auto #确认模式
+        retry:
+          enabled: true #开启重试（自动确认下才能触发）
+          initial-interval: 5000ms #重试间隔
       simple:
-        acknowledge-mode: manual
+        acknowledge-mode: auto
+        retry:
+          enabled: true
+          initial-interval: 5000ms
+          max-attempts: 10
+          max-interval: 10000ms
+      type: direct
+
 server:
   port: 8081
