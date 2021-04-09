@@ -58,7 +58,6 @@ public class redisTest {
     }
 
 
-
     //redis list类型
     //list类型实际上是一个队列
     @Test
@@ -147,7 +146,6 @@ public class redisTest {
     }
 
 
-
     /**
      * 使用Zset实现实时比赛排行榜
      */
@@ -179,7 +177,7 @@ public class redisTest {
 
             Iterator running1 = redisTemplate.opsForZSet().range("running", 0, 3).iterator();
             while (running1.hasNext()) {
-                Player  next = (Player) running1.next();
+                Player next = (Player) running1.next();
                 System.out.println(next);
             }
             TimeUnit.SECONDS.sleep(3);
@@ -187,16 +185,16 @@ public class redisTest {
         }
 
 
-
     }
 
 
     /**
      * player线程
+     *
      * @param player1
      */
     private void playerThread(Player player1) {
-        new Thread(()->{
+        new Thread(() -> {
 
             double score = redisTemplate.opsForZSet().score("running", player1);
             while (score > 0) {
@@ -253,7 +251,7 @@ public class redisTest {
             System.out.println("get the lockWithLua");
         } catch (Exception e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             TimeUnit.SECONDS.sleep(30);
             distributeLock.unlockWithLua(s);
         }
@@ -261,10 +259,11 @@ public class redisTest {
 
     /**
      * 测试分布式锁线程
+     *
      * @param player
      */
     private void distributeThread(Player player) {
-        new Thread(()->{
+        new Thread(() -> {
 
             DistributeLock distributeLock = new DistributeLock(redisTemplate);
             String uuid = UUID.randomUUID().toString();
@@ -272,7 +271,7 @@ public class redisTest {
                 try {
 
                     //可以测试加不加锁区别
-                    while (!distributeLock.lockWithLua(uuid));
+                    while (!distributeLock.lockWithLua(uuid)) ;
 
 //                    System.out.println(Thread.currentThread().getName() + "get the lockWithLua");
 
@@ -282,7 +281,7 @@ public class redisTest {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                }finally {
+                } finally {
                     distributeLock.unlockWithLua(uuid);
                 }
 
@@ -293,6 +292,7 @@ public class redisTest {
 
     /**
      * 注解解析
+     *
      * @throws ClassNotFoundException
      */
     @Test
@@ -319,7 +319,7 @@ public class redisTest {
     public void test11() {
         String key = "cacheConsistency";
         redisTemplate.opsForValue().set(key, "test1", 30, TimeUnit.MINUTES);
-        
+
     }
 
 
@@ -331,11 +331,11 @@ public class redisTest {
 
         String key = "message";
         //生产消息
-        new Thread(() ->{
+        new Thread(() -> {
 
             for (int i = 0; i < 300; i++) {
                 int index = i;
-                redisTemplate.execute((RedisCallback) (connection)->{
+                redisTemplate.execute((RedisCallback) (connection) -> {
                     //定时发送，测试消费端是否永久阻塞
                     try {
                         TimeUnit.SECONDS.sleep(5);
@@ -352,7 +352,7 @@ public class redisTest {
         //3个线程消费消息
         for (int i1 = 0; i1 < 3; i1++) {
 
-            new Thread(()->{
+            new Thread(() -> {
 
                 for (int i = 0; i < 100; i++) {
                     List execute = (List) redisTemplate.execute((RedisCallback) connection -> {
@@ -363,7 +363,7 @@ public class redisTest {
                     });
 
                     //打印数据
-                    execute.forEach( (Consumer<byte[]>) (data) ->{
+                    execute.forEach((Consumer<byte[]>) (data) -> {
                         String s = new String(data);
                         if (!s.equals(key)) {
                             System.out.println(s);
@@ -379,8 +379,45 @@ public class redisTest {
         }
     }
 
+    /**
+     * redis实现共同关注
+     */
+    @Test
+    public void commonFocus() {
+
+        redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
+
+        String key = "小张";
+        String key1 = "小李";
+
+        //小张关注的
+        redisTemplate.opsForSet().add(key, "手机");
+        redisTemplate.opsForSet().add(key, "漫画");
+        redisTemplate.opsForSet().add(key, "电脑");
+        redisTemplate.opsForSet().add(key, "美女");
+
+        //小李关注的
+        redisTemplate.opsForSet().add(key1, "读书");
+        redisTemplate.opsForSet().add(key1, "漫画");
+        redisTemplate.opsForSet().add(key1, "音乐");
+        redisTemplate.opsForSet().add(key1, "美女");
+
+        //获取共同关注
+        Set intersect = redisTemplate.opsForSet().intersect(key, key1);
+
+        Set difference = redisTemplate.opsForSet().difference(key, key1);
+
+        System.out.println("common:");
+        intersect.iterator().forEachRemaining((data) -> {
+            System.out.println(data);
+        });
 
 
+        System.out.println("小王 diff with 小李：");
+        difference.iterator().forEachRemaining((data) -> {
+            System.out.println(data);
+        });
+    }
 
 
 }
