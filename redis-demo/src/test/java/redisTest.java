@@ -19,6 +19,7 @@ import javax.annotation.Resource;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 
 @RunWith(SpringRunner.class)
@@ -320,6 +321,66 @@ public class redisTest {
         redisTemplate.opsForValue().set(key, "test1", 30, TimeUnit.MINUTES);
         
     }
+
+
+    /**
+     * redis实现消息队列
+     */
+    @Test
+    public void messageQueue() {
+
+        String key = "message";
+        //生产消息
+        new Thread(() ->{
+
+            for (int i = 0; i < 300; i++) {
+                int index = i;
+                redisTemplate.execute((RedisCallback) (connection)->{
+                    //定时发送，测试消费端是否永久阻塞
+                    try {
+                        TimeUnit.SECONDS.sleep(5);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    connection.listCommands().lPush(key.getBytes(), ("message" + index).getBytes());
+                    return null;
+                });
+            }
+        }).start();
+
+        //3个线程消费消息
+        for (int i1 = 0; i1 < 3; i1++) {
+
+            new Thread(()->{
+
+                for (int i = 0; i < 100; i++) {
+                    List execute = (List) redisTemplate.execute((RedisCallback) connection -> {
+
+                        //阻塞式获取队列消息
+                        List<byte[]> bytes = connection.listCommands().bRPop(0, key.getBytes());
+                        return bytes;
+                    });
+
+                    //打印数据
+                    execute.forEach( (Consumer<byte[]>) (data) ->{
+                        String s = new String(data);
+                        if (!s.equals(key)) {
+                            System.out.println(s);
+                        }
+                    });
+                }
+            }, "thread" + i1).start();
+        }
+
+
+        while (true) {
+
+        }
+    }
+
+
+
 
 
 }
