@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.soda.security.mapper.UserDao">
+
+    <resultMap id="userRole" type="User" >
+        <id property="id" column="id"></id>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <collection property="roleList"  column="id" ofType="Role" >
+            <id property="id" column="rid"/>
+            <result column="name" property="name"/>
+            <result column="nameZh" property="nameZh"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryUser" resultMap="userRole" >
+      select h.username, h.id, h.password, r.name, r.id as rid, r.nameZh  from hr h
+      inner join hr_role hr on hr.hrid = h.id
+      inner join role r on r.id = hr.rid where h.username = #{username};
+    </select>
+
+</mapper>

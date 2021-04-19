@@ -1,0 +1,14 @@
+logging:
+  level:
+     org.springframework.security: debug
+mybatis:
+  mapper-locations: classpath:mapper/*Mapper.xml
+  type-aliases-package: com.soda.security.domain
+
+
+spring:
+  datasource:
+    password: root
+    username: root
+    url: jdbc:mysql://localhost:3306/vhr
+    driver-class-name: com.mysql.jdbc.Driver
