@@ -36,7 +36,7 @@ public class HelloController {
 
 
     @GetMapping("/home")
-    public String printHello() {
+    public String printHello(String name, String password) {
         return "hello: " + new Date();
     }
 
