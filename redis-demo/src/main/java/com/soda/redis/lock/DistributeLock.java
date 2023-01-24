@@ -13,7 +13,7 @@ public class DistributeLock {
 
     private RedisTemplate redisTemplate;
 
-    private final static String LockKey = "lock";
+    private final static String LockKey = "distribute_lock";
 
     public DistributeLock(RedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
@@ -33,7 +33,8 @@ public class DistributeLock {
             String luaScript = "if (redis.call('setnx',KEYS[1],ARGV[1]) < 1) then return 0;" +
                     " end; redis.call('expire',KEYS[1], tonumber(ARGV[2])); return 1;";
 
-            Long eval = connection.eval(luaScript.getBytes(), ReturnType.INTEGER, 1, LockKey.getBytes(), uuid.getBytes(), "40".getBytes());
+            Long eval = connection.eval(luaScript.getBytes(), ReturnType.INTEGER, 1,
+                    LockKey.getBytes(), uuid.getBytes(), "40".getBytes());
 
             if (eval.intValue() == 1) {
                 return true;

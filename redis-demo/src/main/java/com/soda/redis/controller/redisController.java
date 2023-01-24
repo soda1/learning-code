@@ -4,6 +4,7 @@ package com.soda.redis.controller;
 import com.soda.redis.pojo.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,6 +53,12 @@ public class redisController {
     }
 
 
+    @GetMapping("/add")
+    public ResponseEntity addKey(String key, String value) {
+        redisTemplate.opsForValue().set(key, value);
+        redisTemplate.expire(key, 5000, TimeUnit.SECONDS);
+        return ResponseEntity.ok("success");
+    }
 
 
 

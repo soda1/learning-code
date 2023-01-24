@@ -2,6 +2,7 @@ import com.soda.redis.MyRedisApplication;
 import com.soda.redis.lock.DistributeLock;
 import com.soda.redis.pojo.Player;
 import com.soda.redis.pojo.User;
+import javafx.geometry.Bounds;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +10,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Range;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
@@ -26,13 +30,12 @@ import java.util.function.Consumer;
 @SpringBootTest(classes = MyRedisApplication.class)
 public class redisTest {
 
-    @Autowired
-    @Resource
+    @Resource(name = "redisTemplate")
     private RedisTemplate redisTemplate;
 
     //redis string类型
     @Test
-    public void redisTest() {
+    public void stringOperation() {
         User user = new User("李白", 18);
 
         System.out.println(redisTemplate.getKeySerializer());
@@ -58,10 +61,12 @@ public class redisTest {
     }
 
 
-    //redis list类型
-    //list类型实际上是一个队列
+    /**
+     * redis list类型
+     * list类型实际上是一个队列
+     */
     @Test
-    public void test2() {
+    public void listOperation() {
 
         //从左压入
         redisTemplate.opsForList().leftPush("listTest", new User("杜甫", 20));
@@ -71,20 +76,35 @@ public class redisTest {
         System.out.println(redisTemplate.opsForList().rightPop("listTest"));
         System.out.println(redisTemplate.opsForList().rightPop("listTest"));
 
+        //存map进list
+        Map<String, Object> map = new HashMap<>();
+        map.put("acid", "123123");
+        String cntt = "中国证\"中国\" ";
+        System.out.println(cntt);
+        map.put("cntt", cntt);
+        redisTemplate.opsForList().leftPush("mapList", map);
+        Map<String, Object> mapList = (Map<String, Object>) redisTemplate.opsForList().rightPop("mapList");
+        mapList.forEach((key, str) -> {
+            System.out.println(str);
+        });
     }
 
 
-    //redis hash类型
+    /**
+     * redis hash类型
+     */
     @Test
-    public void test03() {
+    public void hashOperation() {
 
         redisTemplate.opsForHash().put("hashTest", "user1", new User("李白", 20));
         System.out.println(redisTemplate.opsForHash().get("hashTest", "user1"));
     }
 
-    //redis Zset类型
+    /**
+     * redis Zset类型
+     */
     @Test
-    public void test4() {
+    public void zSetOperation() {
         //粉丝越低排行越高
         redisTemplate.opsForZSet().add("zetTest", new User("李白", 20), 20);
         redisTemplate.opsForZSet().add("zetTest", new User("李白", 3), 3);
@@ -97,60 +117,45 @@ public class redisTest {
     }
 
 
-    //redis set类型
+    /**
+     * redis set类型
+     */
     @Test
-    public void test5() {
+    public void setOperation() {
 
         redisTemplate.opsForSet().add("zetTest1", new User("李白", 20));
         redisTemplate.opsForSet().add("zetTest1", new User("李航", 20));
         redisTemplate.opsForSet().add("zetTest1", new User("李航", 20));
-
         //
         System.out.println(redisTemplate.opsForSet().pop("zetTest1").toString());
     }
 
-
-    //redis bitmap类型
-    @Test
-    public void test6() {
-
-        redisTemplate.opsForValue().setBit("videoLike", 7, true);
-    }
-
-
     /**
-     * 使用bitmap实现用户点赞视频demo
+     * redis bitmap类型
      */
     @Test
-    public void test7() {
+    public void bitOperation() {
+        byte[] keyBytes = "w".getBytes();
+        redisTemplate.opsForValue().set("w", "hello");
+        redisTemplate.opsForValue().setBit("w", 7, true);
+        System.out.println(redisTemplate.opsForValue().getBit("w", 7));
+        // bitCount template没有相关操作，只能使用execute
+        // range表示的是字节范围， redis 7.0版本才可以指定bit范围
+        Long count = (Long) redisTemplate.execute((RedisCallback<Long>)
+                connection -> connection.bitCount(keyBytes, 0L, 8L));
+        System.out.println(count);
+        // range：表示的是字节范围
+        Range<Long> to = Range.from(Range.Bound.inclusive(0L)).to(Range.Bound.inclusive(1L));
+        Long posCount = (Long) redisTemplate.execute((RedisCallback<Long>) conn -> conn.bitPos(keyBytes, true, to));
+        System.out.println(posCount);
 
-        //随机用户点赞视频最大为1000次
-        //多次运行先前的设置的bit位也还是会存在的
-        for (int i = 0; i < 1000; i++) {
-
-            double d = Math.random() * 100000;
-            long loc = (long) d;
-            redisTemplate.opsForValue().setBit("videoLike", loc, true);
-        }
-
-        //获取视频点赞的用户数
-        System.out.println(redisTemplate.execute(new RedisCallback() {
-            @Override
-            public Object doInRedis(RedisConnection connection) throws DataAccessException {
-                //connection的bitcount方法直接接收bytes，需要先转换再传进去
-                Jackson2JsonRedisSerializer<String> stringJackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(String.class);
-                byte[] videoLikes = stringJackson2JsonRedisSerializer.serialize("videoLike");
-                return connection.bitCount(videoLikes);
-            }
-        }));
     }
-
 
     /**
      * 使用Zset实现实时比赛排行榜
      */
     @Test
-    public void test8() throws InterruptedException {
+    public void matchRank() throws InterruptedException {
 
         redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(Player.class));
 
@@ -215,31 +220,11 @@ public class redisTest {
         }).start();
     }
 
-
-    /**
-     * 多线程分布式锁测试
-     */
-    @Test
-    public void test9() {
-
-        Player player = new Player("李白", 0);
-
-        for (int i = 0; i < 10; i++) {
-            distributeThread(player);
-        }
-
-        while (true) {
-
-        }
-
-
-    }
-
     /**
      * 分布式锁测试
      */
     @Test
-    public void test10() throws InterruptedException {
+    public void distributeLockTest() throws InterruptedException {
 
         DistributeLock distributeLock = new DistributeLock(redisTemplate);
         String s = UUID.randomUUID().toString();
@@ -309,17 +294,6 @@ public class redisTest {
         for (int i = 0; i < value.length; i++) {
             System.out.println(value[i]);
         }
-    }
-
-
-    /**
-     * 缓存一致性
-     */
-    @Test
-    public void test11() {
-        String key = "cacheConsistency";
-        redisTemplate.opsForValue().set(key, "test1", 30, TimeUnit.MINUTES);
-
     }
 
 
@@ -420,6 +394,72 @@ public class redisTest {
     }
 
 
+    /**
+     * bitField操作
+     */
+    @Test
+    public void bitFieldCooperation() {
+        //redisTemplate.
+        redisTemplate.opsForValue().set("w", "hello");
+        BitFieldSubCommands bitFieldSubCommands = BitFieldSubCommands.create();
+        // get操作，从第二位开始，连续取8个位
+        List w = redisTemplate.opsForValue().bitField("w", bitFieldSubCommands.get(BitFieldSubCommands.BitFieldType.UINT_8)
+                .valueAt(2));
+        System.out.println(w.get(0));
+        // set操作，从第8位开始，将连续的8位替换成97
+        redisTemplate.opsForValue().bitField("w", bitFieldSubCommands.set(BitFieldSubCommands.BitFieldType.UINT_8)
+                .valueAt(8).to(97));
+        Object w1 = redisTemplate.opsForValue().get("w");
+        System.out.println(w1);
+        //incrby操作 从第8位开始连续取8位并加1，如果溢出就操作失败。如果没有设置overflow，那么对于unsigned类型，溢出会置0,
+        // signed类型溢出会转换符号（比如127溢出会变成-128）
+        redisTemplate.opsForValue().set("w", "hello");
+        List w2 = redisTemplate.opsForValue().bitField("w", bitFieldSubCommands.incr(BitFieldSubCommands.BitFieldType.UINT_8)
+                .valueAt(8).overflow(BitFieldSubCommands.BitFieldIncrBy.Overflow.FAIL).by(1L));
+        System.out.println(w2.get(0));
+    }
+
+
+    /**
+     * 模拟bit签到
+     */
+    @Test
+    public void mockSignIn() {
+        String key = "mockSignIn";
+        for (int i = 0; i < 365; i++) {
+            double random = Math.random();
+            boolean b = random > 0.5 ? true : false;
+            redisTemplate.opsForValue().setBit(key, i, b);
+        }
+        int start = 0;
+        int end = 365 % 8 != 0 ? 365 / 8 + 1 : 365 / 8;
+        Long count = (Long) redisTemplate.execute((RedisCallback<Long>) conn -> conn.bitCount(key.getBytes(), start, end));
+        System.out.println("一年共签到：" + count);
+        Calendar instance = Calendar.getInstance();
+        Long start1 = 0L;
+        Long end1 = (long) (31 % 8 != 0 ? 31 / 8 + 1 : 31 / 8) - 1;
+        byte[] bytes = (byte[]) redisTemplate.execute((RedisCallback<byte[]>) conn -> conn.getRange(key.getBytes(), start1, end1));
+        //统计签到
+        int bitCount = 0;
+        int countNum = 0;
+        for (byte aByte : bytes) {
+            if (countNum + 8 > 31) {
+                int diff = 8 - (31 - countNum);
+                aByte = (byte) (aByte  & ((0xff << diff) & 0xff));
+            }
+            countNum += 8;
+
+            bitCount += Integer.bitCount(aByte & 0xff);
+        }
+        System.out.println("1月份签到：" + bitCount);
+    }
+
+    @Test
+    public void insertKey() {
+        for (int i = 1000; i < 10000; i++) {
+            redisTemplate.opsForValue().set("key" + i, i);
+        }
+    }
 }
 
 
