@@ -32,6 +32,7 @@ public class AccountService {
         account.setName(name);
         account.setMoney((float) (Math.random() * 10000));
         accountMapper.updateAccount(account);
+        accountMapper.findById(1);
         System.out.println("finish");
         TimeUnit.SECONDS.sleep(10);
         //throw new Exception("21321");

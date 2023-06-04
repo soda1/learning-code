@@ -30,18 +30,28 @@ public class AccountInterceptor {
     @Autowired
     AfterProcess afterProcess;
 
+    private static final ThreadLocal<Thread> threadLocal = new ThreadLocal();
+
     @Pointcut("execution(public * com.soda.learn.mapper.AccountMapper.updateAccount(..))")
     public void method() {
 
     }
+    @Pointcut("execution(public * com.soda.learn.mapper.AccountMapper.findById(..))")
+    public void method1() {
 
-    @Before("method()")
+    }
+
+    @Before("method() || method1()")
     public void process(JoinPoint joinPoint) throws Throwable {
+        if (threadLocal.get() != null) {
+            return;
+        }
         Object[] args = joinPoint.getArgs();
         Account account = (Account) args[0];
         Account byName = accountMapper.findByName(account.getName());
         System.out.println("before:" + byName.getMoney());
         System.out.println(Thread.currentThread().getName());
+        threadLocal.set(Thread.currentThread());
         //throw new RuntimeException();
 
     }
@@ -55,6 +65,8 @@ public class AccountInterceptor {
                 afterProcess.queryAccount(account.getName());
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
+            }finally {
+                threadLocal.remove();
             }
         });
     }
