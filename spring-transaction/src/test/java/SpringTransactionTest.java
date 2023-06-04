@@ -1,5 +1,5 @@
-import com.soda.SpringTransactionApplication;
-import com.soda.service.MyService;
+import com.soda.learn.SpringTransactionApplication;
+import com.soda.learn.service.MyService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

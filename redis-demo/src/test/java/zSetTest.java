@@ -1,25 +1,13 @@
-import com.soda.redis.MyRedisApplication;
-import com.soda.redis.lock.DistributeLock;
-import com.soda.redis.pojo.Player;
-import com.soda.redis.pojo.User;
+import com.soda.learn.redis.MyRedisApplication;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Condition;
-import org.springframework.context.annotation.Conditional;
-import org.springframework.data.domain.Range;
-import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.lang.annotation.Annotation;
-import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 
 @RunWith(SpringRunner.class)

@@ -1,5 +1,5 @@
-import com.soda.security.SpringSecurityApplication;
-import com.soda.security.service.UserDetailService;
+import com.soda.learn.security.SpringSecurityApplication;
+import com.soda.learn.security.service.UserDetailService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

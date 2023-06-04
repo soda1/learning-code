@@ -1,6 +1,6 @@
-import com.soda.CacheDemoApplication;
-import com.soda.javabean.Account;
-import com.soda.mapper.AccountMapper;
+import com.soda.learn.CacheDemoApplication;
+import com.soda.learn.javabean.Account;
+import com.soda.learn.mapper.AccountMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,8 +8,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.util.concurrent.TimeUnit;
 
 @SpringBootTest(classes = CacheDemoApplication.class)
 @RunWith(SpringRunner.class)

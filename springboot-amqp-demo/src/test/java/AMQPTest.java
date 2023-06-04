@@ -1,4 +1,4 @@
-import com.soda.amqp.AMQPApplication;
+import com.soda.learn.amqp.AMQPApplication;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.amqp.rabbit.connection.CorrelationData;

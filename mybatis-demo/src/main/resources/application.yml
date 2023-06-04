@@ -5,10 +5,9 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
+    username: soda
     password: root
-    url: jdbc:mysql://localhost:3306/spring?serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://192.168.3.100:3306/spring?serverTimezone=Asia/Shanghai
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.soda.javabean
